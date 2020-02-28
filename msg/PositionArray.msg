@@ -1,2 +1,2 @@
 Header header
-Point[] positions
+geometry_msgs/Point[] positions
