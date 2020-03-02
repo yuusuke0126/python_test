@@ -31,16 +31,11 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from math import sin, cos, pi, sqrt
 import numpy as np
 import matplotlib.pyplot as plt
 
 import rospy
-from geometry_msgs.msg import Twist
 from geometry_msgs.msg import Point
-from sensor_msgs.msg import JointState
-from rtabmap_ros.msg import Info
-from std_msgs.msg import Float32
 from nav_msgs.msg import Path
 from python_test.msg import PositionArray
 
@@ -61,7 +56,6 @@ class globalpathAnalizer():
       i += 1
     pos_diff = pos[:,1:] - pos[:,:-1]
     diff_norm = np.linalg.norm(pos_diff, axis=0)
-    rospy.loginfo(pos.shape)
     dist = np.dot(diff_norm, np.triu(np.ones(np.diag(diff_norm).shape)))
     dist = np.insert(dist, 0, 0.0)
     i = 0
@@ -75,17 +69,14 @@ class globalpathAnalizer():
     
     position_msg = PositionArray()
     position_msg.header.stamp = rospy.Time.now()
-    positions = []
-    position = Point()
+    rospy.loginfo("test")
     for i in dist_index:
+      position = Point()
       position.x = pos[0,i]
       position.y = pos[1,i]
-      positions.append(position)
-    position_msg.positions = positions
-    rospy.loginfo(pos[:,dist_index])
+      position_msg.positions.append(position)
+    # rospy.loginfo(pos[:,dist_index])
     self.pub.publish(position_msg)
-    # plt.plot(pos[0,dist_index], pos[1,dist_index])
-    # plt.show(block=True)
   
   def startDrive(self):
     rate = rospy.Rate(10) # 10hz
