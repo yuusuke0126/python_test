@@ -37,17 +37,19 @@ import matplotlib.pyplot as plt
 
 import rospy
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Point
 from sensor_msgs.msg import JointState
 from rtabmap_ros.msg import Info
 from std_msgs.msg import Float32
 from nav_msgs.msg import Path
+from python_test.msg import PositionArray
 
 
 class globalpathAnalizer():
   def __init__(self):
     rospy.init_node('globalpath_analizer', anonymous=True)
     rospy.Subscriber("/move_base/PipelinePlanner/plan", Path, self.callback)
-    # self.pub = rospy.Publisher("/localization_certainty", Float32, queue_size=1)
+    self.pub = rospy.Publisher("/global_plan", PositionArray, queue_size=1)
 
   def callback(self, data):
     dt = 0.2
@@ -57,15 +59,11 @@ class globalpathAnalizer():
     for posestamped in data.poses:
       pos[:,i:i+1] = np.array([[posestamped.pose.position.x],[posestamped.pose.position.y]])
       i += 1
-    # self.pub.publish(localization_certainty/300.0)
     pos_diff = pos[:,1:] - pos[:,:-1]
     diff_norm = np.linalg.norm(pos_diff, axis=0)
     rospy.loginfo(pos.shape)
     dist = np.dot(diff_norm, np.triu(np.ones(np.diag(diff_norm).shape)))
     dist = np.insert(dist, 0, 0.0)
-    # rospy.loginfo(max(diff_norm))
-    # rospy.loginfo(np.argmax(diff_norm))
-    # rospy.loginfo(dist)
     i = 0
     dist_index = []
     for t in np.arange(0,dist[-1]/vx, dt):
@@ -75,16 +73,19 @@ class globalpathAnalizer():
           i = j + 1
           break
     
-    rospy.loginfo(dist_index)
+    position_msg = PositionArray()
+    position_msg.header.stamp = rospy.Time.now()
+    positions = []
+    position = Point()
+    for i in dist_index:
+      position.x = pos[0,i]
+      position.y = pos[1,i]
+      positions.append(position)
+    position_msg.positions = positions
     rospy.loginfo(pos[:,dist_index])
-    # plt.close('all')
-    plt.plot(pos[0,dist_index], pos[1,dist_index])
-    plt.show(block=True)
-    # theta = np.zeros(pos_diff.shape[1])
-    # for i in range(pos_diff.shape[1]):
-    #   theta[i] = np.arctan2(pos_diff[1,i],pos_diff[0,i])
-    # theta_diff = theta[1:] - theta[:-1]
-    # self.last_time = rospy.Time.now()
+    self.pub.publish(position_msg)
+    # plt.plot(pos[0,dist_index], pos[1,dist_index])
+    # plt.show(block=True)
   
   def startDrive(self):
     rate = rospy.Rate(10) # 10hz
