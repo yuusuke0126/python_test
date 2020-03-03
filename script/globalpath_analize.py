@@ -40,7 +40,7 @@ from nav_msgs.msg import Path
 from python_test.msg import PositionArray
 
 
-class globalpathAnalizer():
+class GlobalpathAnalizer():
   def __init__(self):
     rospy.init_node('globalpath_analizer', anonymous=True)
     rospy.Subscriber("/move_base/PipelinePlanner/plan", Path, self.callback)
@@ -71,9 +71,7 @@ class globalpathAnalizer():
     position_msg.header.stamp = rospy.Time.now()
     rospy.loginfo("test")
     for i in dist_index:
-      position = Point()
-      position.x = pos[0,i]
-      position.y = pos[1,i]
+      position = Point(); position.x = pos[0,i]; position.y = pos[1,i]
       position_msg.positions.append(position)
     # rospy.loginfo(pos[:,dist_index])
     self.pub.publish(position_msg)
@@ -87,7 +85,7 @@ class globalpathAnalizer():
 
 if __name__ == '__main__':
   try:
-    ga = globalpathAnalizer()
+    ga = GlobalpathAnalizer()
     ga.startDrive()
   except rospy.ROSInterruptException:
     pass
